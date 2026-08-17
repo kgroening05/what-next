@@ -1,5 +1,6 @@
 """Palate backend: assembles context and proxies the model stream to the client."""
 import json
+from typing import final
 
 from anthropic import AsyncAnthropic
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 
 from .config import settings
 from .prompts import SYSTEM_PROMPT
+from .tools import ALL_TOOLS
 
 app = FastAPI(title="Palate")
 
@@ -58,10 +60,17 @@ async def chat(req: ChatRequest):
                 model=settings.model,
                 max_tokens=settings.max_tokens,
                 system=SYSTEM_PROMPT,
+                tools=ALL_TOOLS,
                 messages=messages,
             ) as stream:
                 async for text in stream.text_stream:
                     yield f"data: {json.dumps({'delta': text})}\n\n"
+                
+                final = await stream.get_final_message()
+                for block in final.content:
+                    if block.type == "tool_use" and block.name == "propose_replies":
+                        replies = block.input.get("replies", [])
+                        yield f"data: {json.dumps({'suggestions': replies})}\n\n"
         except Exception as exc:  # surface errors to the client stream
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
         yield "data: [DONE]\n\n"
