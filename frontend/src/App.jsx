@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { streamChat } from './api'
+import SuggestionChips from './SuggestionChips'
 import './App.css'
 
 export default function App() {
@@ -12,34 +13,37 @@ export default function App() {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight)
   }, [messages])
 
-  async function send() {
-    const text = input.trim()
+  async function send(textOverride) {
+    const text = (textOverride ?? input).trim()
     if (!text || streaming) return
 
     const history = [...messages, { role: 'user', content: text }]
-    // Add the user turn plus an empty assistant turn we'll fill as tokens arrive.
     setMessages([...history, { role: 'assistant', content: '' }])
-    setInput('')
+    if (textOverride === undefined) setInput('')
     setStreaming(true)
 
     try {
-      await streamChat(history, (delta) => {
-        setMessages((prev) => {
-          const next = [...prev]
-          next[next.length - 1] = {
-            role: 'assistant',
-            content: next[next.length - 1].content + delta,
-          }
-          return next
-        })
+      await streamChat(history, {
+        onDelta: (delta) => {
+          setMessages((prev) => {
+            const next = [...prev]
+            const last = next[next.length - 1]
+            next[next.length - 1] = { ...last, content: last.content + delta }
+            return next
+          })
+        },
+        onSuggestions: (suggestions) => {
+          setMessages((prev) => {
+            const next = [...prev]
+            next[next.length - 1] = { ...next[next.length - 1], suggestions }
+            return next
+          })
+        },
       })
     } catch (err) {
       setMessages((prev) => {
         const next = [...prev]
-        next[next.length - 1] = {
-          role: 'assistant',
-          content: `⚠️ ${err.message}`,
-        }
+        next[next.length - 1] = { role: 'assistant', content: `⚠️ ${err.message}` }
         return next
       })
     } finally {
@@ -75,6 +79,16 @@ export default function App() {
             </div>
           </div>
         ))}
+
+        {!streaming &&
+          messages.at(-1)?.role === 'assistant' &&
+          messages.at(-1)?.suggestions && (
+            <SuggestionChips
+              suggestions={messages.at(-1).suggestions}
+              onInsert={setInput}
+              onSend={send}
+            />
+          )}
       </div>
 
       <div className="composer">
@@ -85,7 +99,7 @@ export default function App() {
           placeholder="What are you looking for?"
           rows={2}
         />
-        <button onClick={send} disabled={streaming || !input.trim()}>
+        <button onClick={() => send()} disabled={streaming || !input.trim()}>
           {streaming ? '…' : 'Send'}
         </button>
       </div>
