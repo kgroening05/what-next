@@ -82,3 +82,46 @@ header p { margin: 0.2rem 0 1rem; color: #888; font-size: 0.9rem; }
   .composer textarea { background: #222; color: #eee; border-color: #444; }
   .composer { border-color: #333; }
 }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+  max-width: 80%;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: stretch;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.chip-label,
+.chip-send {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.4rem 0.75rem;
+}
+
+.chip-label:hover { background: rgba(37, 99, 235, 0.1); }
+
+.chip-send {
+  padding: 0.4rem 0.65rem;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+.chip-send:hover { background: rgba(37, 99, 235, 0.18); }
+
+@media (prefers-color-scheme: dark) {
+  .chip { background: #2a2a2a; }
+  .chip-label, .chip-send { color: #7ea8ff; }
+  .chip-send { border-left-color: rgba(255, 255, 255, 0.08); }
+}
