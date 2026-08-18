@@ -4,7 +4,7 @@
 PROPOSE_REPLIES = {
     "name": "propose_replies",
     "description": (
-        "Propose 2-4 short candidate replies the user might send next, phrased "
+        "Propose 2-6 short candidate replies the user might send next, phrased "
         "in their first-person voice (e.g., 'I want something instrumental'). "
         "Call this whenever you ask a clarifying question. Skip it when you're "
         "giving a final recommendation — the user will react in their own words."
